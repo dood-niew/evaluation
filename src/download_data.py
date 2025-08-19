@@ -9,7 +9,7 @@ import os
 def download_m3exam():
     url = "https://drive.google.com/uc?id=1eREETRklmXJLXrNPTyHxQ3RFdPhq_Nes"
     output = "./data/m3exam.zip"
-    extract_to = "./m3exam"
+    extract_to = "./data/m3exam"
     password = "12317"  
 
     if not os.path.exists(output):
