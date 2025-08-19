@@ -4,9 +4,14 @@ from .m3exam_utils import load_dev_examples_once, get_choices_m3exam
 from .formatters import FORMATTERS, ANSWER_CHOICES, ANSWER_TYPES
 import logging
 
-def generate_few_shot_prompt(num_shots: int, dev_df: pd.DataFrame, instuction: str, task_name: str, choices: List[str]):
+def generate_few_shot_prompt(num_shots: int, dev_df: pd.DataFrame, test_df: pd.Series, instuction: str, task_name: str, choices: List[str]):
     prompt = instuction + "\n\n"
-
+    try:
+        subject_value = test_df["subject"]
+        dev_df = dev_df[dev_df["subject"] == subject_value]
+    except:
+        subject_value = "other"
+    
     for shot in range(min(num_shots, dev_df.shape[0])):
         prompt += FORMATTERS[task_name](
             dev_df.iloc[shot, :],
@@ -51,7 +56,7 @@ def get_prompt(
 
     if task_name != "m3exam":
         if num_shots > 0 and few_shot_line is not None:
-            return generate_few_shot_prompt(min(5,num_shots), few_shot_line, instuction, task_name, ANSWER_CHOICES[task_name])+FORMATTERS[task_name](line, ANSWER_CHOICES[task_name], False), ANSWER_CHOICES[task_name], ANSWER_TYPES[task_name], line["answer_text"]
+            return generate_few_shot_prompt(min(5,num_shots), few_shot_line, line, instuction, task_name, ANSWER_CHOICES[task_name])+FORMATTERS[task_name](line, ANSWER_CHOICES[task_name], False), ANSWER_CHOICES[task_name], ANSWER_TYPES[task_name], line["answer_text"]
         elif num_shots > 0 and few_shot_line is None:
             logging.error("num_shots > 0 but few_shot_line is None. Please provide a valid few_shot_line DataFrame.")
             raise ValueError("num_shots > 0 but few_shot_line is None. Please provide a valid few_shot_line DataFrame.")

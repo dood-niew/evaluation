@@ -39,6 +39,7 @@ def generate_one_example(question, lang, method, fill_answer=False):
 
 # added utility function for m3exam to get choices based on answer_text
 def get_choices_m3exam(row : pd.Series):
+    """ bug when combine 4 choices and 5 choices together
     if row["answer_text"] in ['1','2','3','4','5']:
         return ['1','2','3','4','5'][:len(row["options"])]
     elif row["answer_text"] in ['๑', '๒', '๓', '๔', '๕']:
@@ -46,6 +47,16 @@ def get_choices_m3exam(row : pd.Series):
     else:
         logging.error(f"Unexpected answer_text: {row['answer_text']}. Please issue a support ticket.")
         return []
+    """
+    # then we just return the first 5 choices for now
+    if row["answer_text"] in ['1','2','3','4','5']:
+        return ['1','2','3','4','5'][:5]
+    elif row["answer_text"] in ['๑', '๒', '๓', '๔', '๕']:
+        return ['๑','๒','๓','๔','๕'][:5]
+    else:
+        logging.error(f"Unexpected answer_text: {row['answer_text']}. Please issue a support ticket.")
+        return []
+    
     
 def generate_prompt(lang, method, setting, model, test_question, dev_question):
     subject2target = {
@@ -88,7 +99,7 @@ def load_dev_examples_once(lang="thai", method="default"):
     """Load dev examples into global cache if not already loaded."""
     global DEV_EXAMPLES_CACHE
     if DEV_EXAMPLES_CACHE is None:
-        json_path = f"../data/m3exam/text-question/thai-questions-dev.json"
+        json_path = f"./data/m3exam/text-question/thai-questions-dev.json"
         if not os.path.exists(json_path):
             raise FileNotFoundError(f"Dev questions file not found: {json_path}")
 

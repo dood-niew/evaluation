@@ -75,7 +75,7 @@ def format_thai_exam(
     choices: List[str] = [],
     include_answer: bool = True,
 ) -> str:
-    exam_type = line["exam_type"]
+    exam_type = line["subject"]
     if exam_type != "ic":
         prompt = f"\n{line['question']}\na. {line['a']}\nb. {line['b']}\nc. {line['c']}\nd. {line['d']}\ne. {line['e']}\nคำตอบ:"
     else:

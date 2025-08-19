@@ -1,0 +1,10 @@
+pandas 
+numpy
+datasets
+transformers 
+accelerate 
+tqdm
+gdown
+huggingface_hub
+numpy
+torch
