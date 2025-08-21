@@ -8,3 +8,4 @@ gdown
 huggingface_hub
 numpy
 torch
+openai

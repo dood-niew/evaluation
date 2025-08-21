@@ -38,7 +38,9 @@ module restore
 module load Mamba
 module load cpe-cuda/23.09
 module load cudatoolkit/24.11_12.6
+conda deactivate
 conda activate /project/lt200258-aithai/llm/env-list/cuda12_6_torch2_8
+
 
 if [ -z "$1" ]; then
   echo "Error: Checkpoint path argument missing"
