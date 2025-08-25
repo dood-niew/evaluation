@@ -26,7 +26,7 @@ def main(args):
         for gen_test_df,gen_def_df,gen_exam_type in RECIPE[dataset_name]():
             test_df = gen_test_df
             if args.debug:
-                test_df = test_df.iloc[:4]
+                test_df = test_df.iloc[:32]
             def_df = gen_def_df
             exam_type = gen_exam_type
             if exam_type is None:

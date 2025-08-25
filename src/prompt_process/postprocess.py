@@ -15,4 +15,7 @@ class PostProcessor:
     def extract_boxed_number(self):
         boxed_match = re.search(r'\\?boxed\{([^}]+)\}', self.extract_answer() or '')
         return boxed_match.group(1) if boxed_match else None
+    
+    def output(self):
+        return self.text.strip()
 

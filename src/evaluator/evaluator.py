@@ -167,7 +167,7 @@ class Evaluator:
                 decoded_output = self.tokenizer.decode(output_ids, skip_special_tokens=True)
                 processor = PostProcessor(decoded_output)
                 thinks.append(processor.extract_think())
-                responses.append(processor.extract_answer())
+                responses.append(processor.output())
                 pred = processor.extract_boxed_number()
                 result.append(pred)
                 score.append(1 if pred == answer_list[i] else 0)
