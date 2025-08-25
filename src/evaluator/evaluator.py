@@ -156,7 +156,7 @@ class Evaluator:
                 answer_list.append(answer)
             
             model_inputs = self.tokenizer(full_prompt_list, return_tensors="pt", padding=True, truncation=True).to(self.model.device)
-            generated_ids = self.model.generate(
+            generated_ids = self.model_obj.generate(
                 **model_inputs,
                 max_new_tokens=max_seq_len,
                 pad_token_id=self.tokenizer.eos_token_id,

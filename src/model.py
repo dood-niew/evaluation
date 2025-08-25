@@ -8,6 +8,10 @@ class BaseModel(ABC):
     @abstractmethod
     def load_model(self):
         pass
+    
+    @abstractmethod
+    def generate(self, *args, **kwargs):
+        pass
 
 class HFModel(BaseModel):
     def __init__(self, checkpoint_path: str):
@@ -33,6 +37,8 @@ class HFModel(BaseModel):
             pad_token_id=self.tokenizer.pad_token_id,
             trust_remote_code=True
         )
+    def generate(self, *args, **kwargs):
+        return self.model.generate(*args, **kwargs)
 
     def get_logits(self, inputs: List[str], max_seq_len: int = 8192):
         input_ids = self.tokenizer(inputs, padding='longest', return_tensors='pt')["input_ids"]
@@ -55,5 +61,12 @@ class OpenAIModel(BaseModel):
         self.load_model()
 
     def load_model(self):
-        """not implemented yet, but can be used to set up OpenAI API client"""
         openai.api_key = self.api_key
+
+    def generate(self, prompt: str, **kwargs):
+        response = openai.ChatCompletion.create(
+            model=self.model_name,
+            messages=[{"role": "user", "content": prompt}],
+            **kwargs
+        )
+        return response["choices"][0]["message"]["content"]
