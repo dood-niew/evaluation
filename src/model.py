@@ -24,7 +24,7 @@ class HFModel(BaseModel):
         self.model = AutoModelForCausalLM.from_pretrained(
             self.checkpoint_path,
             pad_token_id=self.tokenizer.pad_token_id,
-            device_map="balanced",
+            device_map="auto",
             trust_remote_code=True,
             torch_dtype=torch.bfloat16
         ).eval()
