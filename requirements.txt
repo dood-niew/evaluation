@@ -1,6 +1,6 @@
 pandas 
 numpy
-datasets
+datasets>=3.3.2
 transformers 
 accelerate 
 tqdm

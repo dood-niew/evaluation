@@ -69,21 +69,3 @@ def get_prompt(
         setting = 'few-shot'
         dev_examples = load_dev_examples_once(lang, method)
         return FORMATTERS[task_name](lang, method, setting, None, line, dev_examples), choices, ANSWER_TYPES[task_name], line["answer_text"]
-    
-    
-def format_instructions(tokenizer, prompt: str, choices: List[str], thinking_mode=True) -> str:
-    messages = [
-        {"role": "user", "content": f"{prompt} \nMultiple Choice of {choices}\nPlease put your answer in a \\boxed, e.g. \n {FORMATTERS['choices'](choices)}"},
-    ]
-    if thinking_mode != None:
-        text = tokenizer.apply_chat_template(
-        messages,
-        tokenize=False,
-        add_generation_prompt=True,
-        enable_thinking=thinking_mode)
-    else:
-        text = tokenizer.apply_chat_template(
-            messages,
-            tokenize=False,
-            add_generation_prompt=False)
-    return text

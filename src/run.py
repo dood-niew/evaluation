@@ -1,6 +1,6 @@
 import argparse
 from transformers.trainer_utils import set_seed
-from .model import HFModel
+from .model import HFModel, OpenAIModel
 from .recipe import RECIPE, EVAL
 from .evaluator.evaluator import Evaluator
 import os
@@ -8,13 +8,17 @@ import pandas as pd
 import json 
 
 def main(args):
-    model_obj = HFModel(args.model_path)
+    if args.openai:
+        model_obj = OpenAIModel(args.openai, args.model_path)
+    else:
+        model_obj = HFModel(args.model_path)
     model_name = args.model_path.split("/")[-1]
     if args.save_time:
         current_time = pd.Timestamp.now()
     else:
         current_time = ""
-    eval = Evaluator(model_obj)
+    
+    evaluator = Evaluator(model_obj)
     if model_name[:len("checkpoint")] == "checkpoint":
         model_name = args.model_path.split("/")[-2] + "_" + model_name
     
@@ -23,17 +27,17 @@ def main(args):
     for dataset_name in args.data:
         if dataset_name not in RECIPE:
             raise ValueError(f"Dataset {dataset_name} is not supported. Available datasets: {list(RECIPE.keys())}")
-        for gen_test_df,gen_def_df,gen_exam_type in RECIPE[dataset_name]():
+        for gen_test_df, gen_def_df, gen_exam_type in RECIPE[dataset_name]():
             test_df = gen_test_df
             if args.debug:
-                test_df = test_df.iloc[:32]
+                test_df = test_df.iloc[:10]
             def_df = gen_def_df
             exam_type = gen_exam_type
             if exam_type is None:
                 exam_type = "default"
             if args.mode == "pt":
                 print(f"Evaluating {dataset_name} in pretrain mode with model {model_name}")
-                output = eval.eval_pt(
+                output = evaluator.eval_pt(
                     test_df=test_df,
                     dev_df=def_df,
                     task_name=dataset_name,
@@ -50,7 +54,7 @@ def main(args):
             
             elif args.mode == "it":
                 print(f"Evaluating {dataset_name} in chat mode with model {model_name}")
-                output = eval.eval_it(
+                output = evaluator.eval_it(
                     test_df=test_df,
                     dev_df=def_df,
                     task_name=dataset_name,
@@ -73,6 +77,7 @@ def main(args):
                 json.dump(save_output, f, ensure_ascii=False, indent=2)    
                 
     
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run evaluation on LLMs")
     parser.add_argument('--model-path', 
@@ -118,6 +123,11 @@ if __name__ == "__main__":
         "--save-time",
         action="store_true",
         help="Time stamp for each evaluation (default False)"
+    )
+    parser.add_argument(
+        "--openai",
+        type=str,
+        help="openai key",
     )
     args = parser.parse_args()
     set_seed(args.seed)

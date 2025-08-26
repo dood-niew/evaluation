@@ -15,7 +15,7 @@ import os
 
 def m3exam_recipe():
     download_m3exam()
-    with open("./data/m3exam/text-question/thai-questions-test.json", "r") as f:
+    with open("./data/m3exam/data/text-question/thai-questions-test.json", "r") as f:
         test_questions = json.load(f)
     test_questions_df = pd.DataFrame(test_questions)
     yield test_questions_df, [], None
@@ -64,7 +64,7 @@ def mmlu_thai_recipe():
         
 def belebele_recipe():
     download_belebele()
-    df = datasets.load_dataset("./data/belebele", "tha_Thai")
+    df = datasets.load_dataset("./data/belebele/", "tha_Thai")
     df = pd.DataFrame(df["test"])
     df["choices"] = np.array([df["mc_answer1"],df["mc_answer2"],df["mc_answer3"],df["mc_answer4"]]).T.tolist()
     df["answer"] = (df["correct_answer_num"]).apply(lambda x: int(x)-1)

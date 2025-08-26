@@ -99,7 +99,7 @@ def load_dev_examples_once(lang="thai", method="default"):
     """Load dev examples into global cache if not already loaded."""
     global DEV_EXAMPLES_CACHE
     if DEV_EXAMPLES_CACHE is None:
-        json_path = f"./data/m3exam/text-question/thai-questions-dev.json"
+        json_path = f"./data/m3exam/data/text-question/thai-questions-dev.json"
         if not os.path.exists(json_path):
             raise FileNotFoundError(f"Dev questions file not found: {json_path}")
 

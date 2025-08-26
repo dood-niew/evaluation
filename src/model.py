@@ -3,6 +3,9 @@ import torch
 from typing import List 
 from abc import ABC, abstractmethod
 import openai
+from concurrent.futures import ThreadPoolExecutor
+from .prompt_process.formatters import FORMATTERS
+from typing import List
 class BaseModel(ABC):
     @abstractmethod
     def load_model(self):
@@ -11,6 +14,8 @@ class BaseModel(ABC):
     @abstractmethod
     def generate(self, *args, **kwargs):
         pass
+
+
 
 class HFModel(BaseModel):
     def __init__(self, checkpoint_path: str):
@@ -36,6 +41,7 @@ class HFModel(BaseModel):
             pad_token_id=self.tokenizer.pad_token_id,
             trust_remote_code=True
         )
+    
     def generate(self, *args, **kwargs):
         return self.model.generate(*args, **kwargs)
 
@@ -51,21 +57,50 @@ class HFModel(BaseModel):
         logits = outputs["logits"][:, -1, :]
         log_probs = torch.nn.functional.softmax(logits, dim=-1)
         return log_probs, {"tokens": {"input_ids": input_ids}}
-    
-    
+    def format_instructions(self, prompt: str, choices: List[str], thinking_mode=True) -> str:
+        messages = [
+            {"role": "user", "content": f"{prompt} \nMultiple Choice of {choices}\nPlease put your answer in a \\boxed, e.g. \n {FORMATTERS['choices'](choices)}"},
+        ]
+        if thinking_mode != None:
+            text = self.tokenizer.apply_chat_template(
+            messages,
+            tokenize=False,
+            add_generation_prompt=True,
+            enable_thinking=thinking_mode)
+        else:
+            text = self.tokenizer.apply_chat_template(
+                messages,
+                tokenize=False,
+                add_generation_prompt=False)
+        return text
+
+
 class OpenAIModel(BaseModel):
     def __init__(self, api_key: str, model_name: str):
         self.api_key = api_key
         self.model_name = model_name
-        self.load_model()
-
-    def load_model(self):
         openai.api_key = self.api_key
 
-    def generate(self, prompt: str, **kwargs):
-        response = openai.ChatCompletion.create(
+    def generate_prompt(self, prompt, **kwargs):
+        response = openai.chat.completions.create(
             model=self.model_name,
-            messages=[{"role": "user", "content": prompt}],
+            messages=prompt,
             **kwargs
         )
-        return response["choices"][0]["message"]["content"]
+        return response.choices[0].message.content
+
+    def generate(self, prompts, **kwargs):
+        if isinstance(prompts, str):
+            prompts = [prompts]
+
+        with ThreadPoolExecutor(max_workers=5) as executor:
+            results = list(executor.map(lambda p: self.generate_prompt(p, **kwargs), prompts))
+        return results
+
+    def format_instructions(self, prompt: str, choices: List[str], thinking_mode=True):
+        messages = [
+            {"role": "user", "content": f"{prompt} \nMultiple Choice of {choices}\nPlease put your answer in a \\boxed, e.g. \n {FORMATTERS['choices'](choices)}"}
+        ]
+        return messages
+    def load_model(self):
+        pass

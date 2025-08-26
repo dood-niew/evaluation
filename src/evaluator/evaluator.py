@@ -1,17 +1,14 @@
 import torch
-from ..prompt_process.prompt_generator import get_prompt, format_instructions
-from ..prompt_process.postprocess import PostProcessor
+from ..prompt_process.prompt_generator import get_prompt
 from tqdm import tqdm
 import numpy as np
 import pandas as pd
-from ..model import HFModel
+from ..model import BaseModel, HFModel, OpenAIModel
 import os
-
+from ..prompt_process.postprocess import PostProcessor
 class Evaluator:
-    def __init__(self, model_obj: HFModel):
-        self.model = model_obj.model
+    def __init__(self, model_obj: BaseModel):
         self.model_obj = model_obj
-        self.tokenizer = model_obj.tokenizer
     @torch.no_grad()
     def eval_pt(
         self,
@@ -68,7 +65,7 @@ class Evaluator:
             
             choice_ids = torch.tensor(
                 [self.model_obj.tokenizer(f" {c}", add_special_tokens=False)["input_ids"][-1] for c in choices]
-            ).unsqueeze(0).to(self.model.device)
+            ).unsqueeze(0).to(self.model_obj.model.device)
 
             
             logits, input_info = self.model_obj.get_logits(full_prompt_list, max_seq_len)
@@ -125,6 +122,10 @@ class Evaluator:
         thinking: bool = True,
         **kwargs,
     ):
+        try: 
+            thinking = bool(thinking)
+        except:
+            thinking = None
         result = []
         score = []
         all_prompt_list = []
@@ -144,8 +145,7 @@ class Evaluator:
                     instuction=instuction
                 )
                 
-                chat_template_apply = format_instructions(
-                    self.tokenizer,
+                chat_template_apply = self.model_obj.format_instructions(
                     prompt,
                     choices,
                     thinking_mode=thinking
@@ -154,24 +154,34 @@ class Evaluator:
                 full_prompt_list.append(chat_template_apply)
                 all_prompt_list.append(chat_template_apply)
                 answer_list.append(answer)
-            
-            model_inputs = self.tokenizer(full_prompt_list, return_tensors="pt", padding=True, truncation=True).to(self.model.device)
-            generated_ids = self.model_obj.generate(
-                **model_inputs,
-                max_new_tokens=max_seq_len,
-                pad_token_id=self.tokenizer.eos_token_id,
-            )
-            
-            for i, input_ids in enumerate(model_inputs.input_ids):
-                output_ids = generated_ids[i][len(input_ids):].tolist()
-                decoded_output = self.tokenizer.decode(output_ids, skip_special_tokens=True)
-                processor = PostProcessor(decoded_output)
-                thinks.append(processor.extract_think())
-                responses.append(processor.output())
-                pred = processor.extract_boxed_number()
-                result.append(pred)
-                score.append(1 if pred == answer_list[i] else 0)
-            
+
+            if isinstance(self.model_obj, HFModel):
+                model_inputs = self.model_obj.tokenizer(full_prompt_list, return_tensors="pt", padding=True, truncation=True).to(self.model_obj.model.device)
+                generated_ids = self.model_obj.generate(
+                    **model_inputs,
+                    max_new_tokens=max_seq_len,
+                    pad_token_id=self.model_obj.tokenizer.eos_token_id,
+                )
+                for i, input_ids in enumerate(model_inputs.input_ids):
+                    output_ids = generated_ids[i][len(input_ids):].tolist()
+                    decoded_output = self.model_obj.tokenizer.decode(output_ids, skip_special_tokens=True)
+                    processor = PostProcessor(decoded_output)
+                    thinks.append(processor.extract_think())
+                    responses.append(processor.output())
+                    pred = processor.extract_boxed_number()
+                    result.append(pred)
+                    score.append(1 if pred == answer_list[i] else 0)
+            elif isinstance(self.model_obj, OpenAIModel):
+                    outputs = self.model_obj.generate(
+                        full_prompt_list
+                    )
+                    for decoded_output in outputs:
+                        processor = PostProcessor(decoded_output)
+                        thinks.append(processor.extract_think())
+                        responses.append(processor.output())
+                        pred = processor.extract_boxed_number()
+                        result.append(pred)
+                        score.append(1 if pred == answer_list[i] else 0)
         if save_result_dir:
             test_df = test_df.copy()
             test_df.loc[:,"predict"] = result
