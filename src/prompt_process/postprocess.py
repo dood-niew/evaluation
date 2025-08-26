@@ -13,7 +13,7 @@ class PostProcessor:
         return answer_match.group(1).strip() if answer_match else None
     
     def extract_boxed_number(self):
-        boxed_match = re.search(r'\\?boxed\{([^}]+)\}', self.extract_answer() or '')
+        boxed_match = re.search(r'\\?boxed\{([^}]+)\}', self.text)
         return boxed_match.group(1) if boxed_match else None
     
     def output(self):

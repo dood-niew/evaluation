@@ -3,7 +3,6 @@ import torch
 from typing import List 
 from abc import ABC, abstractmethod
 import openai
-
 class BaseModel(ABC):
     @abstractmethod
     def load_model(self):

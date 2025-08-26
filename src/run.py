@@ -114,7 +114,11 @@ if __name__ == "__main__":
     parser.add_argument("--batch-size", type=int, default=1, help="Batch size for evaluation")
     parser.add_argument("--max-seq-len", type=int, default=8192, help="Size of the output generated text")
     parser.add_argument("--num-shots", type=int, default=5, help="Number of shots for few-shot learning")
-    parser.add_argument("--save-time", type=bool, choices=[True, False], help="Time stamp for each evaluation", default=True)
+    parser.add_argument(
+        "--save-time",
+        action="store_true",
+        help="Time stamp for each evaluation (default False)"
+    )
     args = parser.parse_args()
     set_seed(args.seed)
     main(args=args)

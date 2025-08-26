@@ -73,7 +73,7 @@ def get_prompt(
     
 def format_instructions(tokenizer, prompt: str, choices: List[str], thinking_mode=True) -> str:
     messages = [
-        {"role": "user", "content": f"{prompt}\\boxed{{x}}\n=> Multiple Choice of {choices}\nPlease put your answer in a \\boxed, e.g. \n {FORMATTERS['choices'](choices)}"},
+        {"role": "user", "content": f"{prompt} \nMultiple Choice of {choices}\nPlease put your answer in a \\boxed, e.g. \n {FORMATTERS['choices'](choices)}"},
     ]
     if thinking_mode != None:
         text = tokenizer.apply_chat_template(
