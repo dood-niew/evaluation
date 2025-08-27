@@ -180,7 +180,7 @@ class Evaluator:
                     outputs = self.model_obj.generate(
                         full_prompt_list
                     )
-                    for decoded_output in outputs:
+                    for i, decoded_output in enumerate(outputs):
                         processor = PostProcessor(decoded_output)
                         thinks.append(processor.extract_think())
                         responses.append(processor.output())
