@@ -85,6 +85,9 @@ def format_thai_exam(
         prompt += str(line["answer_text"])
     return prompt
 
+def format_choices(choices: List[str]) -> str:
+    """Format choices for display."""
+    return '\n'.join([f"The answer is: \\boxed{{{choice}}}" for i, choice in enumerate(choices)])
 
 FORMATTERS: dict[str, Callable[[pd.Series, List[str], bool], str]] = {
     "mmlu": format_default,
@@ -94,7 +97,8 @@ FORMATTERS: dict[str, Callable[[pd.Series, List[str], bool], str]] = {
     "belebele": format_mmlu_thai,
     "m3exam": generate_prompt,
     "m6exam": format_m6exam,
-    "thai_exam": format_thai_exam   
+    "thai_exam": format_thai_exam,
+    "choices": format_choices
 }
 
 ANSWER_TYPES: dict[str, str] ={

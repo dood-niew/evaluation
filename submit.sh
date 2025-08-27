@@ -2,11 +2,11 @@
 #SBATCH -p gpu-limited                       # Specify partition [Compute/Memory/GPU]
 #SBATCH -N 1 
 #SBATCH --ntasks-per-node=1		# Specify number of tasks per node
-#SBATCH --gpus-per-node=1		        # Specify total number of GPUs
-#SBATCH -t 24:00:00                    # Specify maximum time limit (hour: minute: second)
+#SBATCH --gpus-per-node=4		        # Specify total number of GPUs
+#SBATCH -t 48:00:00                    # Specify maximum time limit (hour: minute: second)
 #SBATCH -A lt200258                       # Specify project name
-#SBATCH -J evaluate                       # Specify job name
-#SBATCH --output=./logs/thaillm8b-sft-1.out                 # Specify output file
+#SBATCH -J qwen3-8B-LLaMA-Factory-200M                     # Specify job name
+#SBATCH --output=./logs/test-pipeline.out                 # Specify output file
 
 export NCCL_DEBUG=INFO
 export NCCL_SOCKET_IFNAME=hsn 
@@ -38,7 +38,9 @@ module restore
 module load Mamba
 module load cpe-cuda/23.09
 module load cudatoolkit/24.11_12.6
+conda deactivate
 conda activate /project/lt200258-aithai/llm/env-list/cuda12_6_torch2_8
+
 
 if [ -z "$1" ]; then
   echo "Error: Checkpoint path argument missing"

@@ -36,7 +36,7 @@ unzip -P 12317 m3exam.zip -d m3exam
 
 # ---------- M6EXAM --------------
 def download_m6exam():
-    dataset_dir = "./data/thai-onet-m6-exam/data/preprocessed_m6exam.csv"
+    dataset_dir = "./data/thai-onet-m6-exam/"
     if not os.path.exists(dataset_dir):
         logging.info("Downloading ThaiEXAM dataset from Hugging Face...")
         local_dir = snapshot_download(
@@ -47,8 +47,7 @@ def download_m6exam():
         logging.info("ThaiExam Dataset downloaded to: %s", local_dir)
     else:
         logging.info("ThaiExam Dataset already exists at: %s", dataset_dir)
-        
-       
+
 ### if can't connect to internet with backend node
 """bash
 hf download openthaigpt/thai-onet-m6-exam --local-dir ./data/thai-onet-m6-exam --repo-type dataset
@@ -97,9 +96,9 @@ def download_mmlu_thai():
     if not os.path.exists(dataset_dir):
         logging.info("Downloading MMLU-Thai dataset from Hugging Face...")
         local_dir = snapshot_download(
-            repo_id="cais/mmlu_thai",
+            repo_id="SeaLLMs/SeaExam",
             repo_type="dataset",
-            local_dir="./data/seaexam/mmlu-thai"
+            local_dir="./data/seaexam/"
         )
         logging.info("MMLU-Thai Dataset downloaded to: %s", local_dir)
     else:
