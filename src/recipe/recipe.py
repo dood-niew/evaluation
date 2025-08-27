@@ -56,11 +56,10 @@ def mmlu_recipe():
 
 def mmlu_thai_recipe():
     download_mmlu_thai()
-    for exam_type in MMLU_EXAM_TYPE:
-        mmlu_dataset = datasets.load_dataset("./data/seaexam/mmlu-thai")
-        dev_questions_df = restructure_dataframe(pd.DataFrame(mmlu_dataset["validation"]), have_meta_data=True)
-        test_questions_df = restructure_dataframe(pd.DataFrame(mmlu_dataset["test"]), have_meta_data=True)
-        yield test_questions_df, dev_questions_df, exam_type
+    mmlu_dataset = datasets.load_dataset("./data/seaexam/mmlu-thai")
+    dev_questions_df = restructure_dataframe(pd.DataFrame(mmlu_dataset["validation"]), have_meta_data=True)
+    test_questions_df = restructure_dataframe(pd.DataFrame(mmlu_dataset["test"]), have_meta_data=True)
+    yield test_questions_df, dev_questions_df, "mmlu_thai"
         
 def belebele_recipe():
     download_belebele()
