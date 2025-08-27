@@ -30,7 +30,7 @@ For base/pretrained models without instruction formatting.
 #### IT Mode with Thinking Enabled
 ```bash
 python -m src.run \
-  --model-path /scratch/lt200258-aithai/experiments/model/thaillm8b-sft-1 \
+  --model-path Qwen/Qwen3-8B \
   --batch-size 32 \
   --debug \
   -t True \
@@ -40,7 +40,7 @@ python -m src.run \
 #### IT Mode with Thinking Disabled  
 ```bash
 python -m src.run \
-  --model-path /scratch/lt200258-aithai/experiments/model/thaillm8b-sft-1 \
+  --model-path Qwen/Qwen3-8B \
   --batch-size 32 \
   --debug \
   -t False \
@@ -50,7 +50,7 @@ python -m src.run \
 #### Pretrain Mode
 ```bash
 python -m src.run \
-  --model-path /scratch/lt200258-aithai/experiments/model/thaillm8b-sft-1 \
+  --model-path Qwen/Qwen3-8B \
   --batch-size 1 \
   --debug \
   -t None \
