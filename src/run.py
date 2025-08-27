@@ -1,6 +1,6 @@
 import argparse
 from transformers.trainer_utils import set_seed
-from .model import HFModel, OpenAIModel
+from .model import HFModel, OpenAIModel, VLLMModel
 from .recipe import RECIPE, EVAL
 from .evaluator.evaluator import Evaluator
 import os
@@ -10,6 +10,14 @@ import json
 def main(args):
     if args.openai:
         model_obj = OpenAIModel(args.openai, args.model_path)
+    elif args.vllm:
+        model_obj = VLLMModel(args.vllm, args.model_path)
+        if not(model_obj.test_connection()):
+            raise ConnectionError(
+        f"Unable to establish connection to {model_obj.__class__.__name__} "
+        f"at {getattr(model_obj, 'base_url', 'unknown endpoint')}. "
+        f"Please check your network connection and API server status."
+    )
     else:
         model_obj = HFModel(args.model_path)
     model_name = args.model_path.split("/")[-1]
@@ -129,6 +137,8 @@ if __name__ == "__main__":
         type=str,
         help="openai key",
     )
+    parser.add_argument("--vllm", type=str, help="url of service")
+    parser.add_argument("--api-key",type=str, help="api key of service")
     args = parser.parse_args()
     set_seed(args.seed)
     main(args=args)

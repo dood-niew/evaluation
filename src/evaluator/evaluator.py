@@ -3,7 +3,7 @@ from ..prompt_process.prompt_generator import get_prompt
 from tqdm import tqdm
 import numpy as np
 import pandas as pd
-from ..model import BaseModel, HFModel, OpenAIModel
+from ..model import BaseModel, HFModel, OpenAIModel, VLLMModel
 import os
 from ..prompt_process.postprocess import PostProcessor
 class Evaluator:
@@ -26,6 +26,11 @@ class Evaluator:
         debug: bool = False,
         **kwargs,
     ):
+        if isinstance(self.model_obj, (OpenAIModel, VLLMModel)):
+            raise NotImplementedError(
+                f"eval_pt currently does not support {self.model_obj.__class__.__name__} instance type. "
+                f"Only HFModel is supported for eval_pt evaluation."
+            )
         result = []
         score = []
         all_prompt_list = []
@@ -171,7 +176,7 @@ class Evaluator:
                     pred = processor.extract_boxed_number()
                     result.append(pred)
                     score.append(1 if pred == answer_list[i] else 0)
-            elif isinstance(self.model_obj, OpenAIModel):
+            elif isinstance(self.model_obj, (OpenAIModel, VLLMModel)):
                     outputs = self.model_obj.generate(
                         full_prompt_list
                     )

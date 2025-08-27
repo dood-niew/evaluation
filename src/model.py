@@ -6,6 +6,7 @@ import openai
 from concurrent.futures import ThreadPoolExecutor
 from .prompt_process.formatters import FORMATTERS
 from typing import List
+import requests
 class BaseModel(ABC):
     @abstractmethod
     def load_model(self):
@@ -14,8 +15,6 @@ class BaseModel(ABC):
     @abstractmethod
     def generate(self, *args, **kwargs):
         pass
-
-
 
 class HFModel(BaseModel):
     def __init__(self, checkpoint_path: str):
@@ -104,3 +103,162 @@ class OpenAIModel(BaseModel):
         return messages
     def load_model(self):
         pass
+
+
+class VLLMModel(BaseModel):
+    def __init__(self, base_url: str, model_name: str, api_key: str = None):
+        """
+        Initialize VLLM Model
+        
+        Args:
+            base_url: Base URL of vLLM API server (e.g., "http://example/thaillm-inference")
+            model_name: Model name (e.g., "thaillm-8b")
+            api_key: Optional API key for authentication
+        """
+        self.base_url = base_url.rstrip('/')  # Remove trailing slash
+        self.model_name = model_name
+        self.api_key = api_key
+        self.headers = {
+            "Content-Type": "application/json"
+        }
+        if self.api_key:
+            self.headers["Authorization"] = f"Bearer {self.api_key}"
+    
+    def load_model(self):
+        """vLLM API doesn't need to load model locally"""
+        pass
+    
+    def generate_prompt(self, prompt, **kwargs):
+        """
+        Generate response for single prompt
+        
+        Args:
+            prompt: List of messages or string prompt
+            **kwargs: Additional parameters like temperature, top_p, etc.
+        """
+        if isinstance(prompt, str):
+            messages = [{"role": "user", "content": prompt}]
+        elif isinstance(prompt, list):
+            messages = prompt
+        else:
+            raise ValueError("Prompt must be string or list of messages")
+        
+        payload = {
+            "model": self.model_name,
+            "messages": messages,
+            **kwargs
+        }
+        
+        try:
+            response = requests.post(
+                f"{self.base_url}/v1/chat/completions",
+                headers=self.headers,
+                json=payload,
+                timeout=300  # 5 minutes timeout
+            )
+            response.raise_for_status()
+            
+            result = response.json()
+            return result["choices"][0]["message"]["content"]
+            
+        except requests.exceptions.RequestException as e:
+            print(f"API request failed: {e}")
+            return None
+        except (KeyError, IndexError) as e:
+            print(f"Unexpected response format: {e}")
+            return None
+    
+    def generate(self, prompts, max_workers: int = 5, **kwargs):
+        """
+        Generate responses for multiple prompts with parallel processing
+        
+        Args:
+            prompts: Single prompt or list of prompts
+            max_workers: Number of parallel workers
+            **kwargs: Additional parameters like temperature, top_p, etc.
+        """
+        if isinstance(prompts, (str, list)) and not isinstance(prompts[0] if isinstance(prompts, list) and prompts else None, dict):
+            if isinstance(prompts, str):
+                prompts = [prompts]
+        
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            results = list(executor.map(
+                lambda p: self.generate_prompt(p, **kwargs), 
+                prompts
+            ))
+        
+        return results
+    
+    def generate_with_completions_api(self, prompt: str, **kwargs):
+        """
+        Alternative method using completions API (if available)
+        
+        Args:
+            prompt: String prompt
+            **kwargs: Additional parameters
+        """
+        payload = {
+            "model": self.model_name,
+            "prompt": prompt,
+            **kwargs
+        }
+        
+        try:
+            response = requests.post(
+                f"{self.base_url}/v1/completions",
+                headers=self.headers,
+                json=payload,
+                timeout=300
+            )
+            response.raise_for_status()
+            
+            result = response.json()
+            return result["choices"][0]["text"]
+            
+        except requests.exceptions.RequestException as e:
+            print(f"API request failed: {e}")
+            return None
+    
+    def format_instructions(self, prompt: str, choices: List[str], thinking_mode=True):
+        """
+        Format instructions for multiple choice questions
+        
+        Args:
+            prompt: Question prompt
+            choices: List of answer choices
+            thinking_mode: Whether to enable thinking mode (not used in vLLM API)
+        """
+        messages = [
+            {
+                "role": "user", 
+                "content": f"{prompt} \nMultiple Choice of {choices}\nPlease put your answer in a \\boxed, e.g. \n {FORMATTERS['choices'](choices)}"
+            }
+        ]
+        return messages
+    
+    def get_model_info(self):
+        """
+        Get information about available models
+        """
+        try:
+            response = requests.get(
+                f"{self.base_url}/v1/models",
+                headers=self.headers,
+                timeout=30
+            )
+            response.raise_for_status()
+            return response.json()
+        except requests.exceptions.RequestException as e:
+            print(f"Failed to get model info: {e}")
+            return None
+    
+    def test_connection(self):
+        """
+        Test connection to vLLM API server
+        """
+        try:
+            test_response = self.generate_prompt("Hello", max_tokens=10)
+            return True
+        except Exception as e:
+            print(f"Connection test failed: {e}")
+            return False
